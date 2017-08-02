@@ -50,6 +50,7 @@ def sync():
     syncKey = "%s><%s" % (sourceRepo.id, targetRepo.id)
     lastChangeSynced = {}
     changeToken = None
+
     if (os.path.exists(SAVE_FILE)):
         lastChangeSynced = pickle.load(open(SAVE_FILE, "rb" ))
         if lastChangeSynced.has_key(syncKey):
