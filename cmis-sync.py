@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from cmislib.model import CmisClient
+from cmislib.model import CmisClient, Document
 from cmislib.exceptions import ObjectNotFoundException, CmisException
 from time import sleep
 import sys
@@ -113,8 +113,10 @@ def processChange(change, sourceRepo, targetRepo):
     targetObj = None
     try:
         targetObj = targetRepo.getObjectByPath(targetPath)
-        targetObj = targetObj.getLatestVersion()
-        print "Version label:%s" % targetObj.properties['cmis:versionLabel']
+
+        if targetObj is Document :
+            targetObj = targetObj.getLatestVersion()
+            print "Version label:%s" % targetObj.properties['cmis:versionLabel']
         
         # If it does, update its properties
         props = getProperties(targetRepo, sourceProps, 'update')
@@ -131,18 +133,21 @@ def processChange(change, sourceRepo, targetRepo):
         
     # Then, update its content if that is possible
     #targetObj.reload()
-    if (sourceObj.allowableActions['canGetContentStream'] == True and
-        targetObj.allowableActions['canCheckOut'] == True):
-        print "Updating content stream in target object version:%s" % targetObj.properties['cmis:versionLabel']
-        print "target props:%s" % targetObj.properties['cmisbook:copyright']
-        pwc = targetObj.checkout()
-        pwc.setContentStream(
-            sourceObj.getContentStream(),
-            contentType=sourceObj.properties['cmis:contentStreamMimeType'])
-        pwc.checkin(major=False)
-        print "Checkin is done, version:%s" % targetObj.properties['cmis:versionLabel']
-        targetObj.reload()
-        print "target props:%s" % targetObj.properties['cmisbook:copyright']
+    if sourceObj is Document :
+
+        if (sourceObj.allowableActions['canGetContentStream'] == True and
+            targetObj.allowableActions['canCheckOut'] == True):
+            print "Updating content stream in target object version:%s" % targetObj.properties['cmis:versionLabel']
+            #print "target props:%s" % targetObj.properties['cmisbook:copyright']
+            pwc = targetObj.checkout()
+            pwc.setContentStream(
+                sourceObj.getContentStream(),
+                contentType=sourceObj.properties['cmis:contentStreamMimeType'])
+            pwc.checkin(major=False)
+            print "Checkin is done, version:%s" % targetObj.properties['cmis:versionLabel']
+            targetObj.reload()
+        
+            #print "target props:%s" % targetObj.properties['cmisbook:copyright']
         
 def getProperties(targetRepo, sourceProps, mode):
     sourceTypeId = sourceProps['cmis:objectTypeId']
